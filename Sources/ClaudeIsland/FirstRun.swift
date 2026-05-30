@@ -6,6 +6,7 @@ import AppKit
 // bundled hook, so this is a no-op for dev builds.
 
 enum FirstRun {
+    @MainActor
     static func setUpIfNeeded() {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let settings = home.appendingPathComponent(".claude/settings.json")

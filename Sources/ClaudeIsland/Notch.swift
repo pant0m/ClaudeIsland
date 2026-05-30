@@ -32,8 +32,10 @@ final class IslandModel: ObservableObject {
     var tty = ""
     var cwd = ""
 
-    /// Cody's chonk: 0…1 as the context window fills (≈180k = stuffed).
-    var fatness: CGFloat { min(1, CGFloat(ctxTokens) / 180_000) }
+    /// Cody's chonk: a smooth 0…1 by context size that saturates, so it stays
+    /// meaningful for both 200k and 1M-context sessions (≈150k → noticeably
+    /// chonky, ≥500k → near-full) instead of a fixed 200k-window threshold.
+    var fatness: CGFloat { 1 - CGFloat(exp(-Double(ctxTokens) / 150_000)) }
     /// Start of the current turn while working — feeds the tiredness ramp.
     var workingSince: Date? { kind == .working ? startedAt : nil }
 
@@ -129,7 +131,6 @@ final class NotchController {
 
         let kind = snapshot.kind
         guard kind != shown else { return }
-        let previous = shown
         shown = kind
         if kind != .working { endHover() }   // leaving working cancels any hover-expand
 
@@ -147,10 +148,8 @@ final class NotchController {
             }
 
         case .attention:
-            // Banner+sound (OS holds both during Focus/DND) instead of a raw beep.
-            if previous != .attention {
-                Notifier.attention(project: snapshot.project, message: snapshot.message)
-            }
+            // Per-session banners fire in AppDelegate (so concurrent attention
+            // sessions each notify); here we just surface the panel.
             Task { await notch.expand() }
 
         case .done:

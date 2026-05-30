@@ -16,7 +16,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var dirSource: DispatchSourceFileSystemObject?
     private var lastSnapshot = Snapshot()
     private let decoder = JSONDecoder()
-    private var branchCache: (cwd: String, info: String) = ("", "")
+    private var gitCache: [String: (info: String, at: Date)] = [:]
+    private var notifiedAttention: Set<String> = []
 
     private var stateURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -73,7 +74,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func tick() {
         let now = Date().timeIntervalSince1970
-        let snap = StateSelector.select(loadRawState(), now: now)
+        let raw = loadRawState()
+        let snap = StateSelector.select(raw, now: now)
 
         // Apply config every tick (it lives in the watched dir) so edits to
         // config.json reflect live, even when the session snapshot is unchanged.
@@ -83,8 +85,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if controller.model.style != style { controller.model.style = style }
         if controller.model.configColorHex != hex { controller.model.configColorHex = hex }
 
-        let branch = cachedBranch(for: snap.cwd)
+        let branch = gitInfo(snap.cwd)
         if controller.model.branch != branch { controller.model.branch = branch }
+
+        // Per-session attention banners: one per session entering attention,
+        // independent of which session the notch happens to surface.
+        var attnNow: Set<String> = []
+        for (id, s) in raw.sessions ?? [:]
+            where s.state == "attention" && StateSelector.liveness(s, now: now) == .live {
+            attnNow.insert(id)
+            if !notifiedAttention.contains(id) {
+                Notifier.attention(project: s.project ?? "", message: s.message ?? "")
+            }
+        }
+        notifiedAttention = attnNow
 
         guard snap != lastSnapshot else { return }
         lastSnapshot = snap
@@ -202,6 +216,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// menu open, so it's off the hot path.
     private func gitInfo(_ cwd: String) -> String {
         guard !cwd.isEmpty else { return "" }
+        if let c = gitCache[cwd], Date().timeIntervalSince(c.at) < 10 { return c.info }  // TTL cache
         func git(_ args: [String]) -> String? {
             let p = Process()
             p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
@@ -214,17 +229,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        guard var branch = git(["rev-parse", "--abbrev-ref", "HEAD"]), !branch.isEmpty else { return "" }
-        if branch == "HEAD" { branch = git(["rev-parse", "--short", "HEAD"]) ?? "HEAD" }  // detached
-        let dirty = !(git(["status", "--porcelain"]) ?? "").isEmpty
-        return "(\(branch)\(dirty ? "*" : ""))"
-    }
-
-    /// Branch for the surfaced session's cwd, recomputed only when the cwd changes.
-    private func cachedBranch(for cwd: String) -> String {
-        if branchCache.cwd == cwd { return branchCache.info }
-        let info = gitInfo(cwd)
-        branchCache = (cwd, info)
+        let info: String
+        if var branch = git(["rev-parse", "--abbrev-ref", "HEAD"]), !branch.isEmpty {
+            if branch == "HEAD" { branch = git(["rev-parse", "--short", "HEAD"]) ?? "HEAD" }  // detached
+            let dirty = !(git(["status", "--porcelain"]) ?? "").isEmpty
+            info = "(\(branch)\(dirty ? "*" : ""))"
+        } else {
+            info = ""
+        }
+        gitCache[cwd] = (info, Date())
         return info
     }
 

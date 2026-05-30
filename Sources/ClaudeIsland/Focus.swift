@@ -107,8 +107,7 @@ enum Notifier {
     }
 
     static func attention(project: String, message: String) {
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
             switch settings.authorizationStatus {
             case .authorized, .provisional:
                 let content = UNMutableNotificationContent()
@@ -117,7 +116,7 @@ enum Notifier {
                 content.body = message.isEmpty ? "等待你的输入" : message
                 content.sound = .default
                 let req = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-                center.add(req, withCompletionHandler: nil)
+                UNUserNotificationCenter.current().add(req, withCompletionHandler: nil)
             default:
                 osascriptNotify(project: project, message: message)
             }
