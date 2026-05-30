@@ -9,12 +9,15 @@ Mac 灵动岛(Dynamic Island)实时监控 Claude Code CLI 进度。
 
 ## 快速开始
 
+**① 下载预编译版**(免编译):[**最新 Release**](https://github.com/pant0m/ClaudeIsland/releases/latest) → 下载 zip → 解压 → 把 `ClaudeIsland.app` 拖进 `/Applications` → **右键打开**(未公证,首次需右键)→ 点「**Set Up**」自动接线。
+
+**② 或从源码构建**:
 ```bash
-git clone <this-repo> && cd ClaudeIsland
+git clone https://github.com/pant0m/ClaudeIsland && cd ClaudeIsland
 scripts/setup.sh        # 装 hook 生产者 + 接线 settings.json + 构建 .app + 开机自启
 ```
 
-一条命令搞定:菜单栏出现 ✨,刘海里出现 Cody。卸载:`scripts/uninstall.sh`。
+菜单栏出现 ✨,刘海里出现 Cody。卸载:`scripts/uninstall.sh`。
 
 ## 架构
 
