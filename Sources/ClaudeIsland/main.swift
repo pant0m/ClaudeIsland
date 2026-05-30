@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = menu
 
         startWatching()
+        Notifier.requestAuthorization()   // one-time prompt -> native, branded banners
 
         // FSEvents handles file writes; this slow poll only re-evaluates the
         // time-based stuff that happens with no write (a session's process dying).

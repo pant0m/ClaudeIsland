@@ -1,4 +1,5 @@
 import AppKit
+import UserNotifications
 
 // MARK: - Click the notch -> raise the terminal that owns the selected session
 //
@@ -99,12 +100,37 @@ enum TerminalFocus {
 // disturb" comes for free from the OS instead of fragile state detection.
 
 enum Notifier {
+    /// Ask once on launch so attention banners can use the native, branded path
+    /// (shows as "ClaudeIsland" + the app icon, configurable under its own name).
+    static func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
     static func attention(project: String, message: String) {
-        let title = "ClaudeIsland"
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                let content = UNMutableNotificationContent()
+                content.title = project.isEmpty ? "Claude" : project
+                content.subtitle = "需要你介入"
+                content.body = message.isEmpty ? "等待你的输入" : message
+                content.sound = .default
+                let req = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+                center.add(req, withCompletionHandler: nil)
+            default:
+                osascriptNotify(project: project, message: message)
+            }
+        }
+    }
+
+    /// Fallback when native notifications aren't authorised — shows under the
+    /// osascript ("Script Editor") identity, but always works.
+    private static func osascriptNotify(project: String, message: String) {
         let subtitle = project.isEmpty ? "需要你介入" : "\(project) · 需要你介入"
         let body = message.isEmpty ? "等待你的输入" : message
-        let script = "display notification \(esc(body)) "
-            + "with title \(esc(title)) subtitle \(esc(subtitle)) sound name \"Submarine\""
+        let script = "display notification \(esc(body)) with title \"ClaudeIsland\" "
+            + "subtitle \(esc(subtitle)) sound name \"Submarine\""
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         p.arguments = ["-e", script]

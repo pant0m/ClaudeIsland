@@ -3,6 +3,8 @@
 Mac 灵动岛(Dynamic Island)实时监控 Claude Code CLI 进度。
 菜单栏常驻小程序,把每个 Claude Code 会话的状态投到 MacBook 刘海:**工作中 / 需要你介入 / 完成**。配一只随状态变情绪的桌宠 Cody(可换色换皮)。
 
+![Cody 在刘海里工作](docs/notch.png)
+
 > 需要:macOS 14+、带刘海的 MacBook(无刘海自动降级为浮窗)、已装 Claude Code。
 
 ## 快速开始
@@ -39,6 +41,10 @@ ClaudeIsland.app  →  DynamicNotchKit 渲染到刘海
 | done 完成 | Stop | 绿勾 + 总耗时 + 步数,4 秒后自动收起 |
 
 多会话:按 `attention > working > done` 优先级择一主显示,展开态右上角显示并发会话数。无刘海的 Mac 自动降级为浮窗。
+
+悬停刘海展开详情卡片 —— 项目 `(分支*)` · 当前动作 · 计时 · `✎改动文件` · 上下文 · `≈花费`,右上角 `2` 为并发会话数:
+
+![详情卡片](docs/card.png)
 
 ## 文件
 
@@ -87,7 +93,9 @@ pkill -f 'ClaudeIsland/.build'                  # 退出
 }
 ```
 
-模板见 `config.example.json`。8 种皮肤共用同一只身体,靠耳朵/喙/肚皮区分。
+模板见 `config.example.json`。8 种皮肤共用同一只身体,靠耳朵/喙/肚皮区分:
+
+![8 种皮肤](docs/skins.png)
 
 颜色只改「工作中」态;**`attention` 恒为橙、`done` 恒为绿**,保住「橙=需要你」的关键信号。删掉文件或留空 = 默认蓝史莱姆。
 
