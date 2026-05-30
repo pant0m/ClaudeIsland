@@ -17,6 +17,7 @@ echo "▸ assembling ${APP}…"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$HOME/Applications"
 cp .build/release/ClaudeIsland "$APP/Contents/MacOS/ClaudeIsland"
+cp hooks/claude-island.py "$APP/Contents/Resources/claude-island.py"   # bundled for first-run setup
 
 echo "▸ rendering icon (Cody)…"
 ICONSET="$(mktemp -d)/AppIcon.iconset"

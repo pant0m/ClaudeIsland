@@ -12,3 +12,6 @@ xcuserdata/
 
 # Claude Code session state (not part of the project)
 .claude/
+
+# Release artifacts
+dist/

@@ -33,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         statusItem.menu = menu
 
+        FirstRun.setUpIfNeeded()          // pre-built .app: wire hooks + autostart on first run
         startWatching()
         Notifier.requestAuthorization()   // one-time prompt -> native, branded banners
 
